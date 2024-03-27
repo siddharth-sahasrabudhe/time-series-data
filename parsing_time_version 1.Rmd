@@ -1,0 +1,157 @@
+---
+title: "Time series introduction"
+author: "Siddharth"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## What is Time Series?
+
+A time series is a set of observed values ordered in time, or we can say, repeated measurement of something usually with the same fixed interval of time (hourly, weekly, monthly).
+
+## Plot time series - Closing prices of European Stock indices
+
+```{r}
+
+library(MASS)
+plot(EuStockMarkets)
+
+```
+
+## Plot time series - Monthly Airline passenger number
+
+```{r}
+
+plot(AirPassengers)
+
+```
+
+In R, there are special time series class - called as `Date` class and `POSIXct` class which are designed to work best with many time series statistical models and visualization libraries such as ggplot2.
+
+Widely used packages for time series data manipulation:
+
+-   `lubridate`
+
+-   `zoo`
+
+## Load the package
+
+```{r}
+
+library(tidyverse)
+
+#Separately load the package if you have older version of tidyverse package.  
+
+# library(lubricate) 
+
+```
+
+## Import the share price data
+
+```{r}
+share_infy <- read.csv("share_price.csv")
+head(share_infy)
+```
+
+## check the class of time variable in data set
+
+```{r}
+class(share_infy$Date)
+```
+
+## Parsing Date
+
++--------------------------------------+-----------------------------------+
+| order of year,month, day in data-set | parsing function in `lubridate()` |
++======================================+===================================+
+| 16-February-2024                     | `dmy()`                           |
+|                                      |                                   |
+| day-month-year                       |                                   |
++--------------------------------------+-----------------------------------+
+
+```{r}
+share_infy_time <- share_infy %>%
+  mutate(Date = dmy(Date))
+```
+
+## check the class of time variable
+
+```{r}
+class(share_infy_time$Date)
+head(share_infy_time$Date)
+```
+
+## Import IoT sensor data
+
+```{r}
+room_temp <- read.csv("temp_data.csv")
+head(room_temp)
+```
+
+## Check the class of time variable in data set
+
+```{r}
+
+class(room_temp$Datetime)
+
+```
+
+## Parsing Date
+
++--------------------------------------+-----------------------------------+
+| order of year,month, day in data-set | parsing function in `lubridate()` |
++======================================+===================================+
+| 2022-01-04 00:00:00                  | `ymd_hms()`                       |
+|                                      |                                   |
+| year-month-day-hour-minute-second    |                                   |
++--------------------------------------+-----------------------------------+
+
+```{r}
+room_temp_time <- room_temp %>%
+  mutate(Datetime = ymd_hms(Datetime))
+```
+
+## check the class of time variable
+
+```{r}
+class(room_temp_time$Datetime)
+head(room_temp_time$Datetime)
+```
+
+## Date format without separator
+
+```{r}
+date_1 <- ("20240322")
+
+date_1_time <- ymd(date_1)
+class(date_1_time)
+date_1_time
+```
+
+## forward slash separator
+
+```{r}
+date_2 <- ("23/03/2023")
+
+date_2_time <- dmy(date_2)
+class(date_2_time)
+date_2_time
+```
+
+## Another separator
+
+```{r}
+date_3 <- "2023 March 23 03:45"
+
+date_3_time <- ymd_hm(date_3)
+class(date_3_time)
+date_3_time
+```
+
+## Summary:
+
+-   A time series is a set of observed values ordered in time
+-   In R, there are special time series objects - called as Date-time objects which are designed to work best with many time series statistical models and visualization libraries such as ggplot2.
+-   Before manipulating time series data, we must ensure the time component of the data set is converted into date-time object that R understands.
+-   there are two classes in R `Date` and `POSIXct` which are exclusively designed to handle date-time objects.
+-   We used various combinations of `dmy()` function from `lubridate` package to parse the dates and times.
