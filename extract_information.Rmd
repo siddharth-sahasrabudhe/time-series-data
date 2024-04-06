@@ -1,0 +1,209 @@
+---
+title: "Extract information from date-time objects"
+author: "Siddharth"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+In this video we will have a look at various functions from `lubridate` package, that are used to extract the information from date-time objects. For e.g. we can use `year()` function to extract year value from date-time object.
+
+## Load the library
+
+```{r}
+library(tidyverse)
+```
+
+## Generate simulated time series data
+
+```{r}
+set.seed(123)
+
+data_time <- data.frame(date = sample(seq(as.POSIXct("2020/01/01 03:12:34",tz=" "),
+                                     by = "day",
+                                     length.out = 100),
+                                     replace = TRUE),
+                   value = round(rnorm(100, 5, 2), 2))
+
+head(data_time)
+```
+
+## Extract year from date-time object
+
+```{r}
+data_time %>%
+  mutate(year_col=year(date))%>%
+  head
+```
+
+## Extract month from date-time object
+
+```{r}
+data_time %>%
+  mutate(year_col=year(date),month_col=month(date))%>%
+  head
+
+```
+
+## Extract month from date-time object and assign the `label` to it.
+
+```{r}
+data_time %>%
+  mutate(year_col=year(date),month_col=month(date,label=TRUE))%>%
+  head
+```
+
+## Extract hour from date-time object
+
+```{r}
+data_time %>%
+  mutate(year_col=year(date),month_col=month(date),hour_col=hour(date))%>%
+  head
+```
+
+Let's assume, we are analyzing Delta Airlines' performance in terms of arrival delay. So here are the questions we are interested in looking at.
+
+-   On average, Which month has the largest arrival delay?
+
+-   On average, Which week has the largest arrival delay?
+
+-   On average, Which day of a week has the largest arrival delay?
+
+## Load the library
+
+```{r}
+library(nycflights13)
+glimpse(flights)
+```
+
+## On average, Which month has the largest arrival delay?
+
+### Extract month from a date
+
+```{r}
+data_flights <- flights %>%
+  select(time_hour,arr_delay,carrier)%>%
+  filter(carrier=="DL")%>%
+  mutate(data_month = month(time_hour,label=TRUE))
+head(data_flights)
+```
+
+### Aggregate `arrival delay` by month
+
+```{r}
+data_flights_aggr <- data_flights %>%                         
+  group_by(data_month) %>% 
+  dplyr::summarize(arr_delay = mean(arr_delay,na.rm = TRUE)) %>% 
+  as.data.frame()
+```
+
+### Visualise `arrival delay` by month
+
+```{r}
+data_flights_aggr %>%
+  ggplot(aes(x=data_month,y=arr_delay))+
+  geom_col(fill="khaki",color="blue")+
+   geom_text(aes(label=round(arr_delay,0)),nudge_y = 1)+
+  xlab("Month")+
+  ylab("Arrival Delay (Minutes)")+
+  theme_classic()
+```
+
+What observations can we make on arrival delays of Delta Airlines?
+
+-   When compared to other months, June and July have the largest arrival delays.
+
+-   The average delay in June and July is 13 minutes and 15 minutes, respectively.
+
+-   What do these negative values tell us? They are negative because flights arrived before their scheduled arrival times.
+
+## On average, Which day of a week has the largest arrival delay?
+
+### Extract day from a date
+
+```{r}
+data_flights_week <- data_flights %>%
+    mutate(data_day = wday(time_hour,label=TRUE)) 
+head(data_flights_week)
+```
+
+### Aggregate `arrival delay` by days
+
+```{r}
+data_flights_aggr_week <- data_flights_week %>%                         
+  group_by(data_day) %>% 
+  dplyr::summarize(arr_delay = mean(arr_delay,na.rm = TRUE)) %>% 
+  as.data.frame()
+```
+
+### Visualise `arrival delay` by days
+
+```{r}
+data_flights_aggr_week %>%
+  ggplot(aes(x=data_day,y=arr_delay))+
+  geom_col(fill="khaki",color="blue")+
+  geom_text(aes(label=round(arr_delay,0)),nudge_y = 1)+
+  xlab("Day")+
+  ylab("Arrival Delay (Minutes)")+
+  theme_classic()
+```
+
+What observations can we make on arrival delays of Delta Airlines?
+
+-   Mondays and Thursdays have the largest arrival delays compared to other days.
+
+-   the average delay on Monday and Thursday is 5 minutes and 6 minutes respectively.
+
+-   Saturday is an ideal day to travel by Delta Airlines, because you can arrive 5 minutes earlier than planned arrival time.
+
+## On average, Which hour of a day has the largest arrival delay?
+
+### Extract hour from a date
+
+```{r}
+data_flights_hour <- data_flights %>%
+   mutate(data_hour = hour(time_hour))
+head(data_flights_hour)
+```
+
+### Aggregate `arrival delay` by hours
+
+```{r}
+data_flights_hour_aggr <- data_flights_hour %>% 
+  group_by(data_hour) %>% 
+  dplyr::summarize(arr_delay = mean(arr_delay,na.rm = TRUE)) %>% 
+  as.data.frame()
+```
+
+### Visualise `arrival delay` by hour
+
+```{r}
+data_flights_hour_aggr %>%
+  ggplot(aes(x=data_hour,y=arr_delay))+
+  geom_col(fill="khaki",color="blue")+
+  geom_text(aes(label=round(arr_delay,0)),nudge_y = 1)+
+  xlab("Hour")+
+  ylab("Arrival Delay (Minutes)")+
+  scale_x_continuous(breaks=c(1:24))+
+  theme_classic()
+```
+
+What observations can we make on arrival delays of Delta Airlines?
+
+-   From 6AM until 10AM there are no delays and flights have arrived ahead of schedule.
+
+-   The arrival delays starts to go up from 11AM and they are highest at 9PM.
+
+-   On average you can save 11 minutes on your commute, if you travel at around 11PM.
+
+-   There are no Delta Airlines flights scheduled from 12AM to 5AM.
+
+## Summary:
+
+-   `lubridate` package has various functions to extract the information from date-time objects.
+
+| function                      | output |
+|-------------------------------|--------|
+| year('2020-01-31 03:12:34' )  | 2020   |
+| month('2020-01-31 03:12:34' ) | 01     |
+| day('2020-01-31 03:12:34')    | 31     |
+| hour('2020-01-31 03:12:34')   | 03     |
