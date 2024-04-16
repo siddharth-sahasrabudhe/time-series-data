@@ -1,0 +1,182 @@
+---
+title: "Arithmetic with Date-Time Objects"
+author: "Siddharth"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE,warning=FALSE,message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Like number Arithmetic, date-time objects can also be added, subtracted, multiplied and divided. For e.g.
+
+\- You might want to subtract dates from each other to find out length of interval between two dates.
+
+\- You might want to add the dates together to generate a new date in future.
+
+\- You might want to divide one time span by another, to work out the number of weeks in a certain interval.
+
+## Load the library
+
+```{r}
+library(tidyverse)
+```
+
+## Simple arithmetic with Dates - Subtraction
+
+```{r}
+launch_date <- dmy_hm("14072023 09:05")
+
+land_date <- dmy_hm("23082023 12:33")
+
+time_travel <- land_date - launch_date
+
+time_travel
+```
+
+## Simple arithmetic with Dates - Division
+
+```{r}
+time_travel_weeks <- time_travel/7
+
+time_travel_weeks
+
+```
+
+## The Base R function - difftime()
+
+When we subtract one date from another, at the back-end R uses the `difftime()` function to calculate the difference.
+
+```{r}
+time_travel_weeks <- difftime(land_date,launch_date,units="weeks")
+
+time_travel_weeks
+
+```
+
+## Let's work on billing transactions data and use date-time arithmetic.
+
+```{r}
+transact <- read.csv('transact.csv')
+head(transact)
+```
+
+## Let's answer the questions:
+
+-   How many days are required to settle the Invoice?
+-   How many invoices were settled post due date?
+
+### How many days are required to settle the Invoice?
+
+```{r}
+class(transact$Invoice)
+class(transact$Due)
+class(transact$Payment)
+```
+
+```{r}
+transact %>%
+  mutate(days_to_pay = difftime(ymd(Payment),ymd(Invoice),units="days"))%>%
+ head()
+```
+
+### How many invoices were settled post due date?
+
+```{r}
+transact %>%
+  mutate(delay = difftime(ymd(Payment),ymd(Due),units="days"))%>%
+  filter(delay>0)%>%
+  count(delay)%>%
+ head()
+```
+
+## Date-time objects can be worked with comparison operators.
+
+### For Infosys Ltd, compute the number of shares traded and its value in Quarter1 of the financial year.
+
+```{r}
+share_data <- read.csv("share_price.csv")
+glimpse(share_data)
+```
+
+```{r}
+share_data %>%
+  mutate(Date = dmy(Date))%>%
+  filter((Date > ymd("20220331"))&(Date < ymd("20220701")))%>%
+  summarise(total_volume = sum(No.of.Shares),
+            total_value = sum(`Total.Turnover..Rs..`))%>%
+  head()
+```
+
+## Concept of time span
+
+In `lubridate` package, there are two separate classes of time span. A `Duration` class and `Period` Class.
+
+All the helper functions for creating time-span are named after the units of time. Please note they are all in plural form.
+
+The helper functions for Duration start with "d". For period there is no change.
+
+| Time span | Duration   | Period    |
+|-----------|------------|-----------|
+| years     | `dyears()` | `years()` |
+| days      | `ddays()`  | `days()`  |
+| weeks     | `dweeks()` | `weeks()` |
+| hours     | `dhours()` | `hours()` |
+
+## Duration
+
+`Duration` is a fixed time period. Durations are not influenced by leap years or other time changes. It adds/subtracts fixed number of seconds to the current date to calculate the future or past date.
+
+```{r}
+date1 <- dmy("01012024")
+date1 + dyears(1)
+```
+
+```{r}
+leap_year(2024)
+```
+
+## Period
+
+`Period` uses human concept of time span. Periods will take into account the leap year, day light saving time and other time related subtleties and produce the result.
+
+```{r}
+date1 <- dmy("01012024")
+date1 + years(1)
+```
+
+## Simple Arithmetic with `Period` and `Duration`
+
+```{r}
+days()
+```
+
+```{r}
+2*days()
+days(2)
+```
+
+```{r}
+ddays(2)
+```
+
+```{r}
+ymd("2011-01-01") + days()
+```
+
+## Summary:
+
+-   We can perform arithmetic with date-times. We can add and subtract dates, perform division and multiplication. We can also use comparison operators on date-times.
+
+-   We carried out some arithmetic operations on `transactions` data set. We also used comparison operators to filter out the Quarter1 time range from `share_price` dataset.
+
+-   `lubridate` has two time-span classes - `Duration` class and `Period` class
+
+-   `Duration` class follows stop-watch concept of time-span. A duration year will always equal 365 days. Thus, duration class won't take into account leap years or any other time changes.
+
+-   `Period` class follows human concept of time span. Periods will take care of leap year, day-light saving calculations and generate the result.
+
+-   Period and Duration have the same helper functions. All these helper functions are named after period of time in plural form. However, for duration, these functions start with prefix "d".
+
+-   All arithmetic and comparison operations can be performed on Duration and Period classes.
