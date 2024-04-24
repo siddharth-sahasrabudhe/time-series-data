@@ -1,0 +1,113 @@
+---
+title: "Time intervals"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message=FALSE,warning = FALSE)
+```
+
+Interval is a duration with specific start and end date. `lubridate` package comes with many helper functions that work efficiently with interval.
+
+## Load the library
+
+```{r}
+library(tidyverse)
+```
+
+## Load the data
+
+```{r}
+india_PM <- read.csv("India_prime-ministers.csv")
+    head(india_PM)
+```
+
+## Create the interval
+
+```{r}
+class(india_PM$From)
+class(india_PM$To)
+
+india_PM <- india_PM %>% 
+      mutate(office_interval = interval(dmy(From),dmy(To)))%>%
+  view
+
+#india_PM <- india_PM %>% 
+#  mutate(office_interval = dmy(From) %--% dmy(To))%>%
+#  view
+```
+
+## Extract start date and end date of the interval
+
+```{r}
+ india_PM %>% 
+        mutate(office_start = int_start(office_interval),
+               office_end = int_end(office_interval))%>%
+      view
+```
+
+## Calculate interval length
+
+```{r}
+    india_PM %>%
+      mutate(office_period = int_length(office_interval))%>%
+      view
+```
+
+## Calculate interval length in `Period`
+
+```{r}
+ india_PM %>%
+      mutate(office_period = as.period(office_interval))%>%
+      view
+```
+
+## Calculate interval length in `Duration`
+
+```{r}
+  india_PM %>%
+      mutate(int_duration = as.duration(office_interval))%>%
+      view
+```
+
+## Comparing intervals
+
+Check who was the incumbent prime minister when these events took place.
+
+```{r}
+    india_world_cup_cricket <-  dmy("25 June 1983")
+    india_economic_reforms <- dmy("24 July 1991")
+    india_kargil_war <- interval(dmy("3 May 1996"),dmy("26 July 1996"))
+```
+
+### Who was the incumbent PM when India won the world Cup?
+
+```{r}
+india_PM[india_world_cup_cricket %within% india_PM$office_interval,1:3]
+```
+
+### Who was the incumbent PM when India ushered into the era of economic reforms?
+
+```{r}
+india_PM[india_economic_reforms %within% india_PM$office_interval,1:3]
+```
+
+### Who was the incumbent PM when Kargil war was fought between Indian and Pakistan?
+
+```{r}
+india_PM[int_overlaps(india_PM$office_interval,india_kargil_war),1:3]
+```
+
+## Summary
+
+-   Interval is a duration with specific start and end date. `lubridate` package comes with many helper functions to work with intervals.
+
+-   To create the interval, use `interval()` function and pass on start date and end date of the interval. The interval can also be created using `%--%`operator.
+
+-   `int_start()` and `int_end()` functions are used to extract start date and end date of the interval.
+
+-   `int_period()` will return interval length in periods and `int_duration()` will return the interval length in duration (in seconds)
+
+-   To compare a datetime to an interval we used `%within%` operator. It will return `TRUE` if date-time is inside the interval and `FALSE` otherwise.
+
+-   To compare two intervals, We have used `int_interval()` function which will return `TRUE` if there are any times that are inside both intervals.
